@@ -9,11 +9,32 @@ services:
       - 8000:8000
     depends_on:
       - db
+      - datadog-agent
     env_file:
       - ./server/.env
+    networks:
+      - default
 
   db:
     image: postgres:12.4-alpine
     env_file: ./db/.env
-    ports:
-      - 5432:5432
+    networks:
+      - default
+
+  datadog-agent:
+    image: datadog/agent:7.26.0-jmx
+    env_file: ./datadog_agent/.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+    expose:     # default-порт контейнера Datadog-агента, на который 
+      - 8126    # он принимает данные от APM-интеграций
+    networks:
+      - default
+
+
+networks:             # кастомная сеть необходима
+  default:            # для корректного нахождения контейнера
+    driver: bridge    # DataDog-агента контейнером Django
+    

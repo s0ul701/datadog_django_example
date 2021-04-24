@@ -6,6 +6,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+
+    'ddtrace.contrib.django',
 ]
 
 LOCAL_APPS = []
