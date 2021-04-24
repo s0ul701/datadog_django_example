@@ -4,16 +4,42 @@ services:
     build:
       context: ./
       dockerfile: ./server/Dockerfile
-    command: gunicorn config.wsgi -c ./config/gunicorn.py
+    # command: ddtrace-run gunicorn config.wsgi -c ./config/gunicorn.py
+    command: ddtrace-run manage.py runserver 0.0.0.0:8000
     ports:
       - 8000:8000
     depends_on:
       - db
     env_file:
       - ./server/.env
+    networks:
+      - dd_network
 
   db:
     image: postgres:12.4-alpine
     env_file: ./db/.env
     ports:
       - 5432:5432
+    networks:
+      - dd_network
+
+  datadog-agent:
+    image: datadog/agent:7.26.0-jmx
+    env_file:
+      - ./datadog/.env
+    ports:
+      - 8126:8126
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro    # включение автообнаружения контейнеров
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - dd_network
+    links:
+      - server
+
+
+networks:
+  dd_network:
+    driver: bridge
